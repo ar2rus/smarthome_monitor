@@ -1,0 +1,21 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- base set of styles that apply to all versions -->
+    <style name="BaseAppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <!-- declare the theme name that's actually applied in the manifest file -->
+    <style name="AppTheme" parent="BaseAppTheme" />
+
+    <style name="Theme.SmARThome.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.SmARThome.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.SmARThome.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+</resources>

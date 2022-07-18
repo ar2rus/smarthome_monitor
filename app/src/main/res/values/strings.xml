@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">smARThome</string>
+    <string name="title_activity_device_admin_request">smARThome</string>
+    <string name="title_activity_hall_video">HallVideoActivity</string>
+
+</resources>
