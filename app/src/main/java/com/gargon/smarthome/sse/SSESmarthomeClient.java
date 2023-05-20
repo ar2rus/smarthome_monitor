@@ -19,7 +19,7 @@ public class SSESmarthomeClient {
 
     private final ServerSentEvent sse;
 
-    private final List<SSESmarthomeMessageListener> listeners = new CopyOnWriteArrayList();
+    private final List<SSESmarthomeMessageListener> listeners = new CopyOnWriteArrayList<>();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
