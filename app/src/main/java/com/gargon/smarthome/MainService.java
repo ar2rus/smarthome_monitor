@@ -1,17 +1,16 @@
 package com.gargon.smarthome;
 
-import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -21,8 +20,6 @@ import android.view.KeyEvent;
 
 import com.gargon.smarthome.admin.DeviceAdminReceiver_;
 import com.gargon.smarthome.admin.DeviceAdminRequestActivity;
-import com.gargon.smarthome.events.Event;
-import com.gargon.smarthome.events.EventListener;
 import com.gargon.smarthome.model.SmarthomeMessage;
 import com.gargon.smarthome.model.SmarthomeMessageFilter;
 import com.gargon.smarthome.sse.SSESmarthomeClient;
@@ -30,34 +27,13 @@ import com.gargon.smarthome.sse.SSESmarthomeMessageListener;
 
 public class MainService extends Service {
 
-    private Object clientLock = new Object();
+    private final Object clientLock = new Object();
 
     private SSESmarthomeClient client;
-
-
-    private final IBinder binder = new LocalBinder();
-
-    private EventListener listener;
 
     private boolean audioPowerState = true;
 
     private int activeAudioChannelId = AUDIO_CHANNEL_PAD_ID;
-
-    private String activeVideoEventId = null;
-
-
-    public class LocalBinder extends Binder {
-
-        void addEventListener(EventListener listener) {
-            MainService.this.listener = listener;
-        }
-    }
-
-    private void sendEvent(Event event, String... params) {
-        if (listener != null) {
-            listener.onEvent(event, params);
-        }
-    }
 
     private boolean getAdminDev() {
         final ComponentName adminComponent = new ComponentName(MainService.this, DeviceAdminReceiver_.class);
@@ -118,53 +94,6 @@ public class MainService extends Service {
         }
     }
 
-    private void showHallVideo(String videoId) {
-        if (isHallVideoActive()) {
-            return;
-        }
-        boolean force = videoId == null;
-        Log.d(MainService.class.getName(), "show hall video: id= " + videoId + "; force=" + force);
-
-        if (force) {
-            unlockDevice();
-        }
-        if (isScreenOn()) {
-            if (force || spyMode) {
-                activeVideoEventId = videoId;
-                Log.d(MainService.class.getName(), "open intent");
-
-                Intent intent = new Intent(this, HallVideoActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            }
-        }
-    }
-
-    private void hideHallVideo(String videoId) {
-        if (!isHallVideoActive()) {
-            return;
-        }
-        boolean force = videoId == null;
-        Log.d(MainService.class.getName(), "hide hall video: id=" + videoId + "; force=" + force);
-
-        if (force || videoId.equals(activeVideoEventId)) {
-            activeVideoEventId = null;
-            sendEvent(Event.MOTION_END);
-        }
-    }
-
-    private boolean isHallVideoActive() {
-        return listener != null;
-    }
-
-    private void toggleHallVideo() {
-        if (isHallVideoActive()) {
-            hideHallVideo(null);
-        } else {
-            showHallVideo(null);
-        }
-    }
-
     public void onCreate() {
         Log.d(MainService.class.getName(), "service onCreate");
         super.onCreate();
@@ -187,7 +116,6 @@ public class MainService extends Service {
         }
     }
 
-    private final static int COMMAND_MOTION_INFO = 0x41;
     private final static int COMMAND_LIGHT_INFO = 0x46;
     private final static int COMMAND_RC_INFO = 0x75;
     private final static int COMMAND_CHANNEL_INFO = 0x11;
@@ -228,16 +156,7 @@ public class MainService extends Service {
                             } else if (SmarthomeMessageFilter.builder().withPayloadRegexp("000002").build()
                                     .check(message)) {
                                 switchAudioManager(KeyEvent.KEYCODE_MEDIA_NEXT);
-                            } else if (SmarthomeMessageFilter.builder().withPayloadRegexp("000052").build()
-                                    .check(message)) {
-                                toggleHallVideo();
                             }
-                        } else if (SmarthomeMessageFilter.builder().withCommand(COMMAND_MOTION_INFO).withPayloadRegexp("0100[0-9A-F]{4}").build()
-                                .check(message)) {
-                            showHallVideo(message.getPayload().getHex().substring(4));
-                        } else if (SmarthomeMessageFilter.builder().withCommand(COMMAND_MOTION_INFO).withPayloadRegexp("0200[0-9A-F]{4}").build()
-                                .check(message)) {
-                            hideHallVideo(message.getPayload().getHex().substring(4));
                         } else if (SmarthomeMessageFilter.builder().withSource(DEVICE_AUDIOBATH).withCommand(COMMAND_CHANNEL_INFO).withPayloadLength(1).build()
                                 .check(message)) {
                             int channelId = message.getPayload().getBytes()[0];
@@ -268,32 +187,27 @@ public class MainService extends Service {
         }
     }
 
-    private boolean spyMode = Boolean.TRUE;
-
     private Notification createNotification() {
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, HallVideoActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+        int pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            pendingIntentFlags |= PendingIntent.FLAG_IMMUTABLE;
+        }
 
-        String actionTitle = spyMode ? "не следить" : "следить";
-        Intent actionIntent = new Intent(this, MainService.class);
-        actionIntent.putExtra("spyMode", !spyMode);
-        PendingIntent pendingActionIntent = PendingIntent.getService(this, 0,
-                actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                new Intent(this, DeviceAdminRequestActivity.class), pendingIntentFlags);
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(getString(R.string.app_name))
+                .setContentText("Панель теплого пола и автоматика планшета")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
-                .addAction(0, actionTitle, pendingActionIntent)
                 .build();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(MainService.class.getName(), "service handle intent");
-
-        spyMode = intent.getBooleanExtra("spyMode", spyMode);
 
         if (getAdminDev()) {
             createSSEClient();
@@ -305,17 +219,7 @@ public class MainService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return binder;
-    }
-
-    @Override
-    public boolean onUnbind(Intent intent) {
-        Log.d(MainService.class.getName(), "service onUnbind");
-        hideHallVideo(null);
-        listener = null;
-
-        super.onUnbind(intent);
-        return true;
+        return null;
     }
 
     @Override
