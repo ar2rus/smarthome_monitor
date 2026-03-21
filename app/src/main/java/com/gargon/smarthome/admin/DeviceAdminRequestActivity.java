@@ -51,6 +51,7 @@ public class DeviceAdminRequestActivity extends AppCompatActivity {
 
     private TextView bridgeStatusView;
     private TextView adminStatusView;
+    private TextView eventsLinkView;
     private ProgressBar statusProgress;
     private SwitchCompat systemSwitch;
 
@@ -130,6 +131,7 @@ public class DeviceAdminRequestActivity extends AppCompatActivity {
     private void bindViews() {
         bridgeStatusView = findViewById(R.id.bridgeStatus);
         adminStatusView = findViewById(R.id.adminStatus);
+        eventsLinkView = findViewById(R.id.eventsLink);
         statusProgress = findViewById(R.id.statusProgress);
         systemSwitch = findViewById(R.id.systemSwitch);
     }
@@ -184,6 +186,12 @@ public class DeviceAdminRequestActivity extends AppCompatActivity {
                 openBridgeSettingsDialog();
             }
         });
+        eventsLinkView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openEventsScreen();
+            }
+        });
 
         systemSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -228,27 +236,27 @@ public class DeviceAdminRequestActivity extends AppCompatActivity {
     private void openBridgeSettingsDialog() {
         final EditText input = new EditText(this);
         input.setSingleLine(true);
-        input.setText(BridgeSettings.getEventsUrl(this));
+        input.setHint("192.168.1.120");
+        input.setText(BridgeSettings.getBridgeHost(this));
         input.setSelection(input.getText().length());
         input.setTextColor(ContextCompat.getColor(this, R.color.textPrimary));
         input.setHintTextColor(ContextCompat.getColor(this, R.color.textSecondary));
         input.setBackgroundResource(R.drawable.bg_input);
 
         new AlertDialog.Builder(this)
-                .setTitle("URL событий bridge")
-                .setMessage("Меняем полную ссылку на SSE `/events`. `request` и `command` будут идти на тот же host.")
+                .setTitle("IP bridge")
                 .setView(input)
                 .setNegativeButton("Отмена", null)
                 .setPositiveButton("Сохранить", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String url = input.getText().toString().trim();
-                        if (!BridgeSettings.isValidEventsUrl(url)) {
-                            showToast("Нужен корректный http/https URL");
+                        String host = input.getText().toString().trim();
+                        if (!BridgeSettings.isValidBridgeHost(host)) {
+                            showToast("Нужен корректный IP или host");
                             return;
                         }
 
-                        BridgeSettings.setEventsUrl(getApplicationContext(), url);
+                        BridgeSettings.setBridgeHost(getApplicationContext(), host);
                         bridgeClient = new HeatfloorBridgeClient(getApplicationContext());
                         stopLiveUpdates();
                         startLiveUpdates();
@@ -257,6 +265,10 @@ public class DeviceAdminRequestActivity extends AppCompatActivity {
                     }
                 })
                 .show();
+    }
+
+    private void openEventsScreen() {
+        startActivity(new Intent(this, EventsActivity.class));
     }
 
     private void openChannelSettings(int channelId) {
@@ -453,6 +465,7 @@ public class DeviceAdminRequestActivity extends AppCompatActivity {
         statusProgress.setVisibility(busy ? View.VISIBLE : View.GONE);
         systemSwitch.setEnabled(!busy);
         bridgeStatusView.setEnabled(!busy);
+        eventsLinkView.setEnabled(!busy);
         for (ChannelCard card : channelCards) {
             if (card != null) {
                 card.channelSwitch.setEnabled(!busy);
@@ -465,8 +478,8 @@ public class DeviceAdminRequestActivity extends AppCompatActivity {
     }
 
     private void updateBridgeStatus(String state, boolean error) {
-        String url = BridgeSettings.getEventsUrl(this);
-        bridgeStatusView.setText(state + " • " + timeFormat.format(new Date()) + "\n" + url);
+        String host = BridgeSettings.getBridgeHost(this);
+        bridgeStatusView.setText(state + " • " + timeFormat.format(new Date()) + "\n" + host);
         bridgeStatusView.setTextColor(ContextCompat.getColor(this, error ? R.color.status_error : R.color.textPrimary));
     }
 

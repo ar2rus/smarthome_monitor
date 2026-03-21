@@ -38,6 +38,21 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/eventsLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_button_secondary"
+            android:paddingLeft="16dp"
+            android:paddingTop="10dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="10dp"
+            android:text="События"
+            android:textColor="@color/textPrimary"
+            android:textStyle="bold" />
+
         <ProgressBar
             android:id="@+id/statusProgress"
             style="?android:attr/progressBarStyleSmall"

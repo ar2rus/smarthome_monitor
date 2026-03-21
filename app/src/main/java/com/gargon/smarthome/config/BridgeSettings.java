@@ -12,8 +12,9 @@ import okhttp3.HttpUrl;
 public final class BridgeSettings {
 
     private static final String PREFS_NAME = "smarthome_settings";
-    private static final String KEY_EVENTS_URL = "events_url";
-    private static final String DEFAULT_EVENTS_URL = "http://192.168.1.120/events";
+    private static final String KEY_BRIDGE_HOST = "bridge_host";
+    private static final String LEGACY_KEY_EVENTS_URL = "events_url";
+    private static final String DEFAULT_BRIDGE_HOST = "192.168.1.120";
 
     private static final String KEY_CHANNEL_MODE_PREFIX = "channel_mode_";
     private static final String KEY_CHANNEL_MANUAL_PREFIX = "channel_manual_";
@@ -28,44 +29,49 @@ public final class BridgeSettings {
     private BridgeSettings() {
     }
 
-    public static String getEventsUrl(Context context) {
+    public static String getBridgeHost(Context context) {
         SharedPreferences prefs = prefs(context);
-        String value = prefs.getString(KEY_EVENTS_URL, DEFAULT_EVENTS_URL);
-        if (isValidEventsUrl(value)) {
-            return normalizeEventsUrl(value);
+        String value = prefs.getString(KEY_BRIDGE_HOST, null);
+        if (TextUtils.isEmpty(value)) {
+            value = prefs.getString(LEGACY_KEY_EVENTS_URL, DEFAULT_BRIDGE_HOST);
         }
-        return DEFAULT_EVENTS_URL;
+
+        String normalized = normalizeBridgeHost(value);
+        if (isValidBridgeHost(normalized)) {
+            return normalized;
+        }
+        return DEFAULT_BRIDGE_HOST;
     }
 
-    public static void setEventsUrl(Context context, String url) {
+    public static void setBridgeHost(Context context, String host) {
         prefs(context).edit()
-                .putString(KEY_EVENTS_URL, normalizeEventsUrl(url))
+                .putString(KEY_BRIDGE_HOST, normalizeBridgeHost(host))
+                .remove(LEGACY_KEY_EVENTS_URL)
                 .apply();
     }
 
+    public static boolean isValidBridgeHost(String host) {
+        return buildBaseUrl(host) != null;
+    }
+
+    public static String getEventsUrl(Context context) {
+        return getBaseUrl(context) + "events";
+    }
+
+    public static void setEventsUrl(Context context, String url) {
+        setBridgeHost(context, url);
+    }
+
     public static boolean isValidEventsUrl(String url) {
-        HttpUrl parsed = HttpUrl.parse(normalizeEventsUrl(url));
-        return parsed != null
-                && !TextUtils.isEmpty(parsed.scheme())
-                && !TextUtils.isEmpty(parsed.host())
-                && ("http".equals(parsed.scheme()) || "https".equals(parsed.scheme()));
+        return isValidBridgeHost(url);
     }
 
     public static String getBaseUrl(Context context) {
-        HttpUrl url = HttpUrl.parse(getEventsUrl(context));
+        HttpUrl url = buildBaseUrl(getBridgeHost(context));
         if (url == null) {
-            url = HttpUrl.parse(DEFAULT_EVENTS_URL);
+            url = buildBaseUrl(DEFAULT_BRIDGE_HOST);
         }
-
-        HttpUrl.Builder builder = new HttpUrl.Builder()
-                .scheme(url.scheme())
-                .host(url.host());
-
-        if (url.port() != HttpUrl.defaultPort(url.scheme())) {
-            builder.port(url.port());
-        }
-
-        return builder.build().toString();
+        return url == null ? "http://" + DEFAULT_BRIDGE_HOST + "/" : url.toString();
     }
 
     public static void rememberManualPreset(Context context, int channelId, int temperature) {
@@ -132,21 +138,61 @@ public final class BridgeSettings {
         return context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
-    private static String normalizeEventsUrl(String url) {
+    private static String normalizeBridgeHost(String url) {
         String value = url == null ? "" : url.trim();
         if (value.isEmpty()) {
-            return DEFAULT_EVENTS_URL;
+            return DEFAULT_BRIDGE_HOST;
         }
 
-        HttpUrl parsed = HttpUrl.parse(value);
-        if (parsed == null) {
-            return value;
+        if (value.contains("://")) {
+            HttpUrl parsed = HttpUrl.parse(value);
+            String extracted = extractHostPort(parsed);
+            return TextUtils.isEmpty(extracted) ? value : extracted;
         }
 
-        if ("/".equals(parsed.encodedPath()) || parsed.encodedPath().isEmpty()) {
-            parsed = parsed.newBuilder().encodedPath("/events").build();
+        if (value.contains("/")) {
+            HttpUrl parsed = HttpUrl.parse("http://" + value);
+            String extracted = extractHostPort(parsed);
+            if (!TextUtils.isEmpty(extracted)) {
+                return extracted;
+            }
+            return value.substring(0, value.indexOf('/'));
         }
-        return parsed.toString();
+
+        return value;
+    }
+
+    private static HttpUrl buildBaseUrl(String host) {
+        String normalized = normalizeBridgeHost(host);
+        if (TextUtils.isEmpty(normalized)) {
+            return null;
+        }
+
+        HttpUrl parsed = HttpUrl.parse("http://" + normalized);
+        if (parsed == null || TextUtils.isEmpty(parsed.host())) {
+            return null;
+        }
+
+        HttpUrl.Builder builder = new HttpUrl.Builder()
+                .scheme("http")
+                .host(parsed.host());
+
+        if (parsed.port() != HttpUrl.defaultPort("http")) {
+            builder.port(parsed.port());
+        }
+
+        return builder.build();
+    }
+
+    private static String extractHostPort(HttpUrl parsed) {
+        if (parsed == null || TextUtils.isEmpty(parsed.host())) {
+            return null;
+        }
+
+        if (parsed.port() != HttpUrl.defaultPort(parsed.scheme())) {
+            return parsed.host() + ":" + parsed.port();
+        }
+        return parsed.host();
     }
 
     public static final class ChannelPreset {

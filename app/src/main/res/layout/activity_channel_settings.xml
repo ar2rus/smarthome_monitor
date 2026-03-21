@@ -107,39 +107,105 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ручной режим"
+                android:text="Режим канала"
                 android:textColor="@color/textPrimary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <Spinner
+                android:id="@+id/modeSpinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:background="@drawable/bg_input" />
+
+            <LinearLayout
+                android:id="@+id/manualSettingsGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Температура"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="13sp" />
 
                 <Spinner
                     android:id="@+id/manualTempSpinner"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_input"
-                    android:layout_weight="1" />
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/weekSettingsGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/manualApplyButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/bg_button_primary"
-                    android:paddingLeft="18dp"
-                    android:paddingTop="10dp"
-                    android:paddingRight="18dp"
-                    android:paddingBottom="10dp"
-                    android:text="Применить"
-                    android:textColor="@color/buttonPrimaryText"
-                    android:textStyle="bold" />
+                    android:text="Пн-Пт"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="13sp" />
+
+                <Spinner
+                    android:id="@+id/weekdaysProgramSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Суббота"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="13sp" />
+
+                <Spinner
+                    android:id="@+id/saturdayProgramSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Воскресенье"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="13sp" />
+
+                <Spinner
+                    android:id="@+id/sundayProgramSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/applyModeButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_button_primary"
+                android:paddingLeft="18dp"
+                android:paddingTop="10dp"
+                android:paddingRight="18dp"
+                android:paddingBottom="10dp"
+                android:text="Применить"
+                android:textColor="@color/buttonPrimaryText"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -153,81 +219,25 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Недельный график"
+                android:text="Программы П0..П9"
                 android:textColor="@color/textPrimary"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/programsHelp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Пн-Пт"
+                android:layout_marginTop="6dp"
+                android:text="Это базовые программы контроллера. Недельный режим выбирает одну программу для будней, субботы и воскресенья."
                 android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
 
-            <Spinner
-                android:id="@+id/weekdaysProgramSpinner"
+            <LinearLayout
+                android:id="@+id/programsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_input" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Суббота"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
-
-            <Spinner
-                android:id="@+id/saturdayProgramSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_input" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Воскресенье"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
-
-            <Spinner
-                android:id="@+id/sundayProgramSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_input" />
-
-            <TextView
-                android:id="@+id/weekApplyButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_button_primary"
-                android:paddingLeft="18dp"
-                android:paddingTop="10dp"
-                android:paddingRight="18dp"
-                android:paddingBottom="10dp"
-                android:text="Применить расписание"
-                android:textColor="@color/buttonPrimaryText"
-                android:textStyle="bold" />
+                android:orientation="vertical" />
         </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Программы графика"
-            android:textColor="@color/textPrimary"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:id="@+id/programsContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
     </LinearLayout>
 </ScrollView>

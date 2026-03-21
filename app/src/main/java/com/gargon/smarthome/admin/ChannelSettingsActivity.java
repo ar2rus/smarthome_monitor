@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -48,6 +49,9 @@ public class ChannelSettingsActivity extends AppCompatActivity {
     private static final int COMMAND_HEATFLOOR_INFO = 0x61;
     private static final int DEVICE_RELAY_1 = 0x14;
 
+    private static final int UI_MODE_MANUAL = 0;
+    private static final int UI_MODE_WEEK = 1;
+
     private final Handler handler = new Handler();
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
@@ -62,12 +66,14 @@ public class ChannelSettingsActivity extends AppCompatActivity {
     private TextView channelRelayStateView;
     private TextView bridgeStatusView;
     private ProgressBar statusProgress;
+    private Spinner modeSpinner;
+    private View manualSettingsGroup;
+    private View weekSettingsGroup;
     private Spinner manualTempSpinner;
     private Spinner weekdaysProgramSpinner;
     private Spinner saturdayProgramSpinner;
     private Spinner sundayProgramSpinner;
-    private TextView manualApplyButton;
-    private TextView weekApplyButton;
+    private TextView applyModeButton;
     private ViewGroup programsContainer;
 
     private HeatfloorBridgeClient bridgeClient;
@@ -137,12 +143,14 @@ public class ChannelSettingsActivity extends AppCompatActivity {
         channelRelayStateView = findViewById(R.id.channelRelayState);
         bridgeStatusView = findViewById(R.id.bridgeStatus);
         statusProgress = findViewById(R.id.statusProgress);
+        modeSpinner = findViewById(R.id.modeSpinner);
+        manualSettingsGroup = findViewById(R.id.manualSettingsGroup);
+        weekSettingsGroup = findViewById(R.id.weekSettingsGroup);
         manualTempSpinner = findViewById(R.id.manualTempSpinner);
         weekdaysProgramSpinner = findViewById(R.id.weekdaysProgramSpinner);
         saturdayProgramSpinner = findViewById(R.id.saturdayProgramSpinner);
         sundayProgramSpinner = findViewById(R.id.sundayProgramSpinner);
-        manualApplyButton = findViewById(R.id.manualApplyButton);
-        weekApplyButton = findViewById(R.id.weekApplyButton);
+        applyModeButton = findViewById(R.id.applyModeButton);
         programsContainer = findViewById(R.id.programsContainer);
     }
 
@@ -153,28 +161,26 @@ public class ChannelSettingsActivity extends AppCompatActivity {
         channelRelayStateView.setText("Нет live-данных");
         channelSwitch.setChecked(false);
 
-        List<String> temperatureLabels = new ArrayList<String>();
-        for (int temperature = HeatfloorBridgeClient.MIN_TEMPERATURE;
-             temperature <= HeatfloorBridgeClient.MAX_TEMPERATURE;
-             temperature++) {
-            temperatureLabels.add(temperature + " °C");
-        }
+        ArrayAdapter<String> modeAdapter = new ArrayAdapter<String>(
+                this,
+                android.R.layout.simple_spinner_item,
+                buildModeLabels()
+        );
+        modeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        modeSpinner.setAdapter(modeAdapter);
+
         ArrayAdapter<String> manualAdapter = new ArrayAdapter<String>(
                 this,
                 android.R.layout.simple_spinner_item,
-                temperatureLabels
+                buildManualTemperatureLabels()
         );
         manualAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         manualTempSpinner.setAdapter(manualAdapter);
 
-        List<String> programLabels = new ArrayList<String>();
-        for (int i = 0; i < HeatfloorBridgeClient.PROGRAM_COUNT; i++) {
-            programLabels.add(HeatfloorCatalog.getProgramLabel(i));
-        }
         ArrayAdapter<String> programAdapter = new ArrayAdapter<String>(
                 this,
                 android.R.layout.simple_spinner_item,
-                programLabels
+                buildProgramLabels()
         );
         programAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         weekdaysProgramSpinner.setAdapter(programAdapter);
@@ -191,6 +197,33 @@ public class ChannelSettingsActivity extends AppCompatActivity {
         setProgramSelection(weekdaysProgramSpinner, preset.weekdaysProgram);
         setProgramSelection(saturdayProgramSpinner, preset.saturdayProgram);
         setProgramSelection(sundayProgramSpinner, preset.sundayProgram);
+        modeSpinner.setSelection(preset.isWeek() ? UI_MODE_WEEK : UI_MODE_MANUAL);
+        updateModeSectionVisibility();
+    }
+
+    private List<String> buildModeLabels() {
+        List<String> labels = new ArrayList<String>();
+        labels.add("Ручной режим");
+        labels.add("Недельный график");
+        return labels;
+    }
+
+    private List<String> buildManualTemperatureLabels() {
+        List<String> labels = new ArrayList<String>();
+        for (int temperature = HeatfloorBridgeClient.MIN_TEMPERATURE;
+             temperature <= HeatfloorBridgeClient.MAX_TEMPERATURE;
+             temperature++) {
+            labels.add(temperature + " °C");
+        }
+        return labels;
+    }
+
+    private List<String> buildProgramLabels() {
+        List<String> labels = new ArrayList<String>();
+        for (int i = 0; i < HeatfloorBridgeClient.PROGRAM_COUNT; i++) {
+            labels.add(HeatfloorCatalog.getProgramLabel(i));
+        }
+        return labels;
     }
 
     private void bindActions() {
@@ -218,45 +251,55 @@ public class ChannelSettingsActivity extends AppCompatActivity {
             }
         });
 
-        manualApplyButton.setOnClickListener(new View.OnClickListener() {
+        modeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onClick(View v) {
-                applyManualMode();
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateModeSectionVisibility();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
             }
         });
 
-        weekApplyButton.setOnClickListener(new View.OnClickListener() {
+        applyModeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                applyWeekMode();
+                applySelectedMode();
             }
         });
+    }
+
+    private void updateModeSectionVisibility() {
+        boolean weekSelected = modeSpinner.getSelectedItemPosition() == UI_MODE_WEEK;
+        manualSettingsGroup.setVisibility(weekSelected ? View.GONE : View.VISIBLE);
+        weekSettingsGroup.setVisibility(weekSelected ? View.VISIBLE : View.GONE);
     }
 
     private void openBridgeSettingsDialog() {
         final EditText input = new EditText(this);
         input.setSingleLine(true);
-        input.setText(BridgeSettings.getEventsUrl(this));
+        input.setHint("192.168.1.120");
+        input.setText(BridgeSettings.getBridgeHost(this));
         input.setSelection(input.getText().length());
         input.setTextColor(ContextCompat.getColor(this, R.color.textPrimary));
         input.setHintTextColor(ContextCompat.getColor(this, R.color.textSecondary));
         input.setBackgroundResource(R.drawable.bg_input);
 
         new AlertDialog.Builder(this)
-                .setTitle("URL событий bridge")
-                .setMessage("Меняем полную ссылку на SSE /events. request и command будут идти на тот же host.")
+                .setTitle("IP bridge")
                 .setView(input)
                 .setNegativeButton("Отмена", null)
                 .setPositiveButton("Сохранить", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String url = input.getText().toString().trim();
-                        if (!BridgeSettings.isValidEventsUrl(url)) {
-                            showToast("Нужен корректный http/https URL");
+                        String host = input.getText().toString().trim();
+                        if (!BridgeSettings.isValidBridgeHost(host)) {
+                            showToast("Нужен корректный IP или host");
                             return;
                         }
 
-                        BridgeSettings.setEventsUrl(getApplicationContext(), url);
+                        BridgeSettings.setBridgeHost(getApplicationContext(), host);
                         bridgeClient = new HeatfloorBridgeClient(getApplicationContext());
                         stopLiveUpdates();
                         startLiveUpdates();
@@ -374,7 +417,7 @@ public class ChannelSettingsActivity extends AppCompatActivity {
             channelTempsView.setText(formatTemperatures(channel));
             channelRelayStateView.setText(relayText(channel));
             channelSwitch.setChecked(snapshot.systemEnabled && channel.modeId != 0);
-            applySpinnerSelections(channel);
+            applyModeControls(channel);
 
             if (shouldReloadPrograms()) {
                 bindPrograms(snapshot.programs);
@@ -384,8 +427,11 @@ public class ChannelSettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void applySpinnerSelections(HeatfloorSnapshot.ChannelState channel) {
+    private void applyModeControls(HeatfloorSnapshot.ChannelState channel) {
         BridgeSettings.ChannelPreset preset = BridgeSettings.getChannelPreset(this, channelId);
+
+        int uiMode = resolveUiMode(channel, preset);
+        modeSpinner.setSelection(uiMode);
 
         int manualTemperature = channel.manualTemperature;
         if (manualTemperature < HeatfloorBridgeClient.MIN_TEMPERATURE
@@ -415,6 +461,21 @@ public class ChannelSettingsActivity extends AppCompatActivity {
         setProgramSelection(weekdaysProgramSpinner, weekdaysProgram);
         setProgramSelection(saturdayProgramSpinner, saturdayProgram);
         setProgramSelection(sundayProgramSpinner, sundayProgram);
+        updateModeSectionVisibility();
+    }
+
+    private int resolveUiMode(HeatfloorSnapshot.ChannelState channel, BridgeSettings.ChannelPreset preset) {
+        switch (channel.modeId) {
+            case 2:
+            case 3:
+            case 5:
+                return UI_MODE_WEEK;
+            case 1:
+            case 4:
+                return UI_MODE_MANUAL;
+            default:
+                return preset.isWeek() ? UI_MODE_WEEK : UI_MODE_MANUAL;
+        }
     }
 
     private void setProgramSelection(Spinner spinner, int programId) {
@@ -654,10 +715,18 @@ public class ChannelSettingsActivity extends AppCompatActivity {
                 });
     }
 
+    private void applySelectedMode() {
+        if (modeSpinner.getSelectedItemPosition() == UI_MODE_WEEK) {
+            applyWeekMode();
+        } else {
+            applyManualMode();
+        }
+    }
+
     private void applyManualMode() {
         final int temperature = manualTempSpinner.getSelectedItemPosition() + HeatfloorBridgeClient.MIN_TEMPERATURE;
-        executeBridgeAction("Включаю ручной режим...",
-                "Ручной режим применен",
+        executeBridgeAction("Применяю ручной режим...",
+                "Режим применен",
                 new BridgeAction() {
                     @Override
                     public void run() throws Exception {
@@ -674,7 +743,7 @@ public class ChannelSettingsActivity extends AppCompatActivity {
         final int sundayProgram = sundayProgramSpinner.getSelectedItemPosition();
 
         executeBridgeAction("Применяю недельный график...",
-                "Недельный график применен",
+                "Режим применен",
                 new BridgeAction() {
                     @Override
                     public void run() throws Exception {
@@ -752,12 +821,12 @@ public class ChannelSettingsActivity extends AppCompatActivity {
         statusProgress.setVisibility(busy ? View.VISIBLE : View.GONE);
         bridgeStatusView.setEnabled(!busy);
         channelSwitch.setEnabled(!busy);
+        modeSpinner.setEnabled(!busy);
         manualTempSpinner.setEnabled(!busy);
         weekdaysProgramSpinner.setEnabled(!busy);
         saturdayProgramSpinner.setEnabled(!busy);
         sundayProgramSpinner.setEnabled(!busy);
-        manualApplyButton.setEnabled(!busy);
-        weekApplyButton.setEnabled(!busy);
+        applyModeButton.setEnabled(!busy);
 
         for (int i = 0; i < programsContainer.getChildCount(); i++) {
             View card = programsContainer.getChildAt(i);
@@ -785,8 +854,8 @@ public class ChannelSettingsActivity extends AppCompatActivity {
     }
 
     private void updateBridgeStatus(String state, boolean error) {
-        String url = BridgeSettings.getEventsUrl(this);
-        bridgeStatusView.setText(state + " • " + timeFormat.format(new Date()) + "\n" + url);
+        String host = BridgeSettings.getBridgeHost(this);
+        bridgeStatusView.setText(state + " • " + timeFormat.format(new Date()) + "\n" + host);
         bridgeStatusView.setTextColor(ContextCompat.getColor(this, error ? R.color.status_error : R.color.textPrimary));
     }
 
