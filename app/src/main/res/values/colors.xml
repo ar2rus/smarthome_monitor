@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#B85C38</color>
-    <color name="colorPrimaryDark">#23313A</color>
-    <color name="colorAccent">#E29B45</color>
-    <color name="surfaceBackground">#F6ECDE</color>
-    <color name="surfaceCard">#FFFDF9</color>
-    <color name="surfaceCardAlt">#F8F0E7</color>
-    <color name="surfaceStroke">#D9C5B3</color>
-    <color name="textPrimary">#2F251D</color>
-    <color name="textSecondary">#6A5A4C</color>
-    <color name="status_ok">#2E7D32</color>
-    <color name="status_warn">#A35A00</color>
-    <color name="status_error">#B3261E</color>
-    <color name="buttonPrimaryText">#FFF9F2</color>
+    <color name="colorPrimary">#F28C3A</color>
+    <color name="colorPrimaryDark">#07131C</color>
+    <color name="colorAccent">#58D0C2</color>
+    <color name="surfaceBackground">#061018</color>
+    <color name="surfaceCard">#0E1A23</color>
+    <color name="surfaceCardAlt">#142532</color>
+    <color name="surfaceStroke">#203545</color>
+    <color name="textPrimary">#F3F7FA</color>
+    <color name="textSecondary">#93A6B5</color>
+    <color name="status_ok">#52D18B</color>
+    <color name="status_warn">#F0B95D</color>
+    <color name="status_error">#FF7B7B</color>
+    <color name="buttonPrimaryText">#081118</color>
 </resources>

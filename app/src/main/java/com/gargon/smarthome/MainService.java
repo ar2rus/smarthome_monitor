@@ -20,6 +20,7 @@ import android.view.KeyEvent;
 
 import com.gargon.smarthome.admin.DeviceAdminReceiver_;
 import com.gargon.smarthome.admin.DeviceAdminRequestActivity;
+import com.gargon.smarthome.config.BridgeSettings;
 import com.gargon.smarthome.model.SmarthomeMessage;
 import com.gargon.smarthome.model.SmarthomeMessageFilter;
 import com.gargon.smarthome.sse.SSESmarthomeClient;
@@ -30,6 +31,7 @@ public class MainService extends Service {
     private final Object clientLock = new Object();
 
     private SSESmarthomeClient client;
+    private String clientUrl;
 
     private boolean audioPowerState = true;
 
@@ -128,9 +130,15 @@ public class MainService extends Service {
 
     private void createSSEClient() {
         synchronized (clientLock) {
-            if (client == null) {
-                client = new SSESmarthomeClient("http://192.168.1.120/events", 30);
-                client.addListener(new SSESmarthomeMessageListener() {
+            String eventsUrl = BridgeSettings.getEventsUrl(this);
+            if (client != null && eventsUrl.equals(clientUrl)) {
+                return;
+            }
+
+            closeSSEClient();
+            client = new SSESmarthomeClient(eventsUrl, 30);
+            clientUrl = eventsUrl;
+            client.addListener(new SSESmarthomeMessageListener() {
                     @Override
                     public void onMessage(SmarthomeMessage message) {
                         Log.d(MainService.class.getName(), message.toString());
@@ -174,7 +182,6 @@ public class MainService extends Service {
                         }
                     }
                 });
-            }
         }
     }
 
@@ -183,6 +190,7 @@ public class MainService extends Service {
             if (client != null) {
                 client.close();
                 client = null;
+                clientUrl = null;
             }
         }
     }

@@ -19,9 +19,14 @@
         android:layout_width="64dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:background="@drawable/bg_input"
         android:ems="2"
         android:inputType="number"
         android:maxLines="1"
+        android:paddingLeft="10dp"
+        android:paddingTop="8dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="8dp"
         android:textColor="@color/textPrimary" />
 
     <TextView
@@ -37,9 +42,14 @@
         android:layout_width="72dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:background="@drawable/bg_input"
         android:ems="2"
         android:inputType="number"
         android:maxLines="1"
+        android:paddingLeft="10dp"
+        android:paddingTop="8dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="8dp"
         android:textColor="@color/textPrimary" />
 
     <Button

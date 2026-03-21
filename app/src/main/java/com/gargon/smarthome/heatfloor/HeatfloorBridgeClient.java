@@ -1,5 +1,9 @@
 package com.gargon.smarthome.heatfloor;
 
+import android.content.Context;
+
+import com.gargon.smarthome.config.BridgeSettings;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -24,7 +28,6 @@ public class HeatfloorBridgeClient {
     public static final int MIN_TEMPERATURE = 10;
     public static final int MAX_TEMPERATURE = 45;
 
-    private static final String BASE_URL = "http://192.168.1.120";
     private static final int DEVICE_RELAY_1 = 0x14;
     private static final int COMMAND_HEATFLOOR = 0x60;
     private static final int COMMAND_HEATFLOOR_INFO = 0x61;
@@ -37,8 +40,10 @@ public class HeatfloorBridgeClient {
     private static final int MODE_DAY_FOR_TODAY = 5;
 
     private final OkHttpClient httpClient;
+    private final Context appContext;
 
-    public HeatfloorBridgeClient() {
+    public HeatfloorBridgeClient(Context context) {
+        appContext = context.getApplicationContext();
         httpClient = new OkHttpClient.Builder()
                 .connectTimeout(3, TimeUnit.SECONDS)
                 .readTimeout(5, TimeUnit.SECONDS)
@@ -117,7 +122,7 @@ public class HeatfloorBridgeClient {
     }
 
     private JSONObject requestHeatfloor(String hexData, int timeoutMs) throws Exception {
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(BASE_URL + "/request").newBuilder()
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(BridgeSettings.getBaseUrl(appContext) + "request").newBuilder()
                 .addQueryParameter("c", String.valueOf(COMMAND_HEATFLOOR))
                 .addQueryParameter("a", String.valueOf(DEVICE_RELAY_1))
                 .addQueryParameter("r", String.valueOf(COMMAND_HEATFLOOR_INFO))
@@ -132,7 +137,7 @@ public class HeatfloorBridgeClient {
     }
 
     private void sendHeatfloorCommand(String hexData) throws Exception {
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(BASE_URL + "/command").newBuilder()
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(BridgeSettings.getBaseUrl(appContext) + "command").newBuilder()
                 .addQueryParameter("c", String.valueOf(COMMAND_HEATFLOOR))
                 .addQueryParameter("a", String.valueOf(DEVICE_RELAY_1));
         if (hexData != null && hexData.length() > 0) {
