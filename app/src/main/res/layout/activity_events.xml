@@ -102,7 +102,7 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1.1"
+                android:layout_weight="1.0"
                 android:text="Время"
                 android:textColor="@color/textPrimary"
                 android:textStyle="bold" />
@@ -110,7 +110,7 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.9"
+                android:layout_weight="0.8"
                 android:text="Источник"
                 android:textColor="@color/textPrimary"
                 android:textStyle="bold" />
@@ -118,7 +118,15 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.9"
+                android:layout_weight="0.8"
+                android:text="Получатель"
+                android:textColor="@color/textPrimary"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8"
                 android:text="Команда"
                 android:textColor="@color/textPrimary"
                 android:textStyle="bold" />
@@ -126,7 +134,7 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="2.3"
+                android:layout_weight="1.9"
                 android:text="Payload"
                 android:textColor="@color/textPrimary"
                 android:textStyle="bold" />

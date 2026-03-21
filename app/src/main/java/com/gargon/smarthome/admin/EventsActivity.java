@@ -176,11 +176,13 @@ public class EventsActivity extends AppCompatActivity {
 
         TextView timeView = row.findViewById(R.id.eventTime);
         TextView sourceView = row.findViewById(R.id.eventSource);
+        TextView destinationView = row.findViewById(R.id.eventDestination);
         TextView commandView = row.findViewById(R.id.eventCommand);
         TextView payloadView = row.findViewById(R.id.eventPayload);
 
         timeView.setText(timeFormat.format(resolveEventDate(message)));
         sourceView.setText(toHex(message.getSource()));
+        destinationView.setText(toHex(message.getDestination()));
         commandView.setText(toHex(message.getCommand()));
         payloadView.setText(message.hasPayload() ? message.getPayload().getHex() : "-");
 
